@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Fichas - Limerick Bilingual School</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Librería para renderizar Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo-section">
+                <div class="logo-placeholder">
+                    <div class="logo-shield">
+                        <img src="limerik-logo.png" alt="Limerick Logo" width="60px">
+                    </div>
+                </div>
+                <div class="school-info">
+                    <h1>LIMERICK</h1>
+                    <h2>BILINGUAL SCHOOL</h2>
+                    <p class="motto">EDUCARE UT LIBERTATE</p>
+                </div>
+            </div>
+            <nav class="nav">
+                <button class="refresh-btn" onclick="loadData()">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Sección de filtros -->
+            <section class="filters-section">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Buscar por curso, materia o profesor..." class="search-input">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <div class="filter-buttons" id="filterButtons">
+                    <button class="filter-btn active" data-filter="all">Todas las Materias</button>
+                </div>
+            </section>
+
+            <!-- Loading indicator -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Cargando datos...</p>
+            </div>
+
+            <!-- Error message -->
+            <div class="error-message" id="errorMessage" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Error al cargar los datos. Por favor, verifica la configuración de Google Sheets.</p>
+                <button onclick="loadData()" class="retry-btn">Reintentar</button>
+            </div>
+
+            <!-- Sección de materias -->
+            <section class="subjects-section" id="subjectsSection">
+                <!-- Las fichas se generarán dinámicamente aquí -->
+            </section>
+
+            <!-- Modal para detalles de clase -->
+            <div class="modal" id="classModal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal()">&times;</span>
+                    <div class="modal-header">
+                        <h3 id="modalTitle"></h3>
+                        <div class="modal-info">
+                            <span class="badge" id="modalCourse"></span>
+                            <span class="badge" id="modalYear"></span>
+                            <span class="badge" id="modalQuarter"></span>
+                        </div>
+                        <div class="modal-navigation">
+                            <button class="nav-btn" id="prevClassBtn" onclick="navigateClass('prev')">
+                                <i class="fas fa-chevron-left"></i> Clase Anterior
+                            </button>
+                            <span class="class-position" id="classPosition"></span>
+                            <button class="nav-btn" id="nextClassBtn" onclick="navigateClass('next')">
+                                Siguiente Clase <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="professor-info">
+                            <i class="fas fa-user-tie"></i>
+                            <span id="modalProfessor"></span>
+                        </div>
+                        <div class="class-number">
+                            <i class="fas fa-hashtag"></i>
+                            <span>Clase <span id="modalClassNumber"></span></span>
+                        </div>
+                        
+                        <div class="content-section">
+                            <h4><i class="fas fa-book"></i> Contenido Teórico</h4>
+                            <div id="modalTheoreticalContent"></div>
+                        </div>
+                        
+                        <div class="content-section">
+                            <h4><i class="fas fa-tools"></i> Contenido Práctico</h4>
+                            <div id="modalPracticalContent"></div>
+                        </div>
+                        
+                        <div class="content-section">
+                            <h4><i class="fas fa-link"></i> Recursos</h4>
+                            <div id="modalResources"></div>
+                        </div>
+                        
+                        <div class="content-section" id="extraSection" style="display: none;">
+                            <h4><i class="fas fa-plus"></i> Extra</h4>
+                            <div id="modalExtra"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Limerick Bilingual School. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

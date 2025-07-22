@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Enlaces Automáticos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+</head>
+<body>
+    <div class="container" style="margin-top: 40px;">
+        <h1>Test de Enlaces Automáticos</h1>
+        
+        <div class="modal-content" style="position: relative; transform: none; max-width: 800px; margin: 20px auto;">
+            <h3>Contenido Teórico</h3>
+            <div id="test-theoretical" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 10px 0;"></div>
+            
+            <h3>Contenido Práctico</h3>
+            <div id="test-practical" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 10px 0;"></div>
+            
+            <h3>Recursos</h3>
+            <div id="test-resources" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 10px 0;"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Datos de prueba
+        const testData = {
+            contenidoTeorico: `Estudiaremos los fundamentos de programación web. 
+            
+Para más información, consulta https://developer.mozilla.org/es/docs/Web/HTML y también https://www.w3schools.com/html/
+            
+**Enlaces en Markdown:** [MDN Web Docs](https://developer.mozilla.org) es una excelente referencia.`,
+            
+            contenidoPractico: `Práctica con HTML y CSS.
+            
+Recursos útiles:
+- https://codepen.io para experimentar
+- https://github.com para proyectos
+- Tutorial completo en https://www.freecodecamp.org/learn`,
+            
+            recursos: `https://developer.mozilla.org/es/, https://www.w3schools.com, Tutorial de CSS en https://css-tricks.com, [Guía oficial](https://html.spec.whatwg.org)`
+        };
+
+        // Renderizar contenido de prueba
+        document.getElementById('test-theoretical').innerHTML = renderMarkdown(testData.contenidoTeorico);
+        document.getElementById('test-practical').innerHTML = renderMarkdown(testData.contenidoPractico);
+        
+        // Simular procesamiento de recursos
+        const resourcesContainer = document.getElementById('test-resources');
+        const recursos = testData.recursos;
+        
+        if (recursos && recursos.trim()) {
+            const renderedResources = renderMarkdown(recursos);
+            const originalText = recursos.trim();
+            const hasCommas = originalText.includes(',') && !originalText.includes('\n');
+            const hasMarkdownSyntax = /\*\*|##|###|\[.*\]\(.*\)|\*\s+|-\s+/.test(originalText);
+            
+            if (hasCommas && !hasMarkdownSyntax) {
+                const resources = originalText.split(',').map(r => r.trim()).filter(r => r);
+                resourcesContainer.innerHTML = resources.map(resource => {
+                    const urlPattern = /^https?:\/\/[^\s]+$/i;
+                    if (urlPattern.test(resource)) {
+                        let displayName = resource;
+                        try {
+                            const url = new URL(resource);
+                            displayName = url.hostname + (url.pathname !== '/' ? url.pathname : '');
+                            if (displayName.length > 40) {
+                                displayName = displayName.substring(0, 37) + '...';
+                            }
+                        } catch (e) {
+                            if (resource.length > 40) {
+                                displayName = resource.substring(0, 37) + '...';
+                            }
+                        }
+                        
+                        return `<a href="${resource}" target="_blank" class="resource-link" title="${resource}">
+                            <i class="fas fa-external-link-alt"></i>
+                            ${displayName}
+                        </a>`;
+                    } else {
+                        const linkedResource = linkifyUrls(resource);
+                        return `<div class="resource-item">
+                            <i class="fas fa-file"></i>
+                            ${linkedResource}
+                        </div>`;
+                    }
+                }).join('');
+            } else {
+                resourcesContainer.innerHTML = `<div class="markdown-content">${renderedResources}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
