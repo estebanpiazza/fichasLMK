@@ -306,12 +306,12 @@ async function loadData() {
 // Función para generar botones de filtro
 function renderFilterButtons() {
     const filterButtons = document.getElementById('filterButtons');
-    const courses = [...new Set(allData.map(item => item.curso))].sort();
+    const subjects = [...new Set(allData.map(item => item.materia))].sort();
     
     filterButtons.innerHTML = `
-        <button class="filter-btn active" data-filter="all">Todos los Cursos</button>
-        ${courses.map(course => 
-            `<button class="filter-btn" data-filter="${course}">${course}</button>`
+        <button class="filter-btn active" data-filter="all">Todas las Materias</button>
+        ${subjects.map(subject => 
+            `<button class="filter-btn" data-filter="${subject}">${subject}</button>`
         ).join('')}
     `;
     
@@ -334,57 +334,60 @@ function renderSubjects() {
     const subjectsSection = document.getElementById('subjectsSection');
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     
-    // Filtrar datos según búsqueda y filtro de curso
+    // Filtrar datos según búsqueda y filtro de materia
     let filteredData = allData.filter(item => {
         const matchesSearch = item.materia.toLowerCase().includes(searchTerm) ||
                             item.profesor.toLowerCase().includes(searchTerm) ||
                             item.curso.toLowerCase().includes(searchTerm);
         
-        const matchesCourse = currentSubject === 'all' || item.curso === currentSubject;
+        const matchesSubject = currentSubject === 'all' || item.materia === currentSubject;
         
-        return matchesSearch && matchesCourse;
+        return matchesSearch && matchesSubject;
     });
     
-    // Agrupar por curso
-    const groupedData = filteredData.reduce((acc, item) => {
-        if (!acc[item.curso]) {
-            acc[item.curso] = [];
+    // Agrupar por materia (no por curso)
+    const groupedBySubject = filteredData.reduce((acc, item) => {
+        if (!acc[item.materia]) {
+            acc[item.materia] = {};
         }
-        acc[item.curso].push(item);
+        if (!acc[item.materia][item.curso]) {
+            acc[item.materia][item.curso] = [];
+        }
+        acc[item.materia][item.curso].push(item);
         return acc;
     }, {});
-    
-    // Ordenar clases dentro de cada curso por número de clase
-    Object.keys(groupedData).forEach(course => {
-        groupedData[course].sort((a, b) => a.numeroClase - b.numeroClase);
-    });
-    
-    // Renderizar HTML
-    subjectsSection.innerHTML = Object.keys(groupedData).sort().map(course => {
-        const classes = groupedData[course];
-        const firstClass = classes[0]; // Para obtener información del curso
+
+    // Renderizar HTML agrupado por materia
+    subjectsSection.innerHTML = Object.keys(groupedBySubject).sort().map(subject => {
+        const courses = groupedBySubject[subject];
+        const totalCourses = Object.keys(courses).length;
         
         return `
-            <div class="subject-group" data-subject="${course}">
-                <div class="subject-header" onclick="toggleSubject('${course}')">
-                    <div>
-                        <h3 class="subject-title">${course}</h3>
-                        <p class="course-info">${firstClass.materia} - ${firstClass.profesor}</p>
+            <div class="subject-group collapsed" data-subject="${subject}">
+                <div class="subject-header" onclick="toggleSubject('${subject}')">
+                    <div class="subject-header-content">
+                        <h3 class="subject-title">${subject}</h3>
+                        <p class="subject-subtitle">${totalCourses} curso${totalCourses !== 1 ? 's' : ''}</p>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <span class="subject-count">${classes.length} clase${classes.length !== 1 ? 's' : ''}</span>
+                    <div class="subject-toggle">
+                        <span class="subject-count">${Object.values(courses).reduce((total, classes) => total + classes.length, 0)} clases</span>
                         <i class="fas fa-chevron-down chevron"></i>
                     </div>
                 </div>
-                <div class="classes-grid">
-                    ${classes.map(classItem => createClassCard(classItem)).join('')}
+                <div class="courses-grid">
+                    ${Object.keys(courses).sort().map(course => {
+                        const classes = courses[course].sort((a, b) => a.numeroClase - b.numeroClase);
+                        const firstClass = classes[0];
+                        
+                        return createCourseCard(course, firstClass, classes.length);
+                    }).join('')}
                 </div>
             </div>
         `;
     }).join('');
     
     // Si no hay resultados
-    if (Object.keys(groupedData).length === 0) {
+    if (Object.keys(groupedBySubject).length === 0) {
         subjectsSection.innerHTML = `
             <div style="text-align: center; padding: 60px 20px; color: var(--gray-dark);">
                 <i class="fas fa-search" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
@@ -393,6 +396,54 @@ function renderSubjects() {
             </div>
         `;
     }
+}
+
+// Función para crear tarjeta de curso compacta
+function createCourseCard(courseName, firstClass, classCount) {
+    return `
+        <div class="course-card" onclick="openCourseClasses('${courseName}', '${firstClass.materia}')">
+            <div class="course-header">
+                <div class="course-name">${courseName}</div>
+                <div class="course-details">
+                    <span class="course-badge">${firstClass.año}</span>
+                    <span class="course-badge">${firstClass.cuatrimestre}</span>
+                </div>
+                <div class="course-professor">
+                    <i class="fas fa-user-tie"></i>
+                    ${firstClass.profesor}
+                </div>
+            </div>
+            <div class="course-stats">
+                <span class="class-count">
+                    <i class="fas fa-list"></i>
+                    ${classCount} clase${classCount !== 1 ? 's' : ''}
+                </span>
+                <button class="view-classes-btn" onclick="event.stopPropagation(); openCourseClasses('${courseName}', '${firstClass.materia}')">
+                    Ver clases
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Función para abrir las clases de un curso específico
+function openCourseClasses(courseName, subjectName) {
+    // Filtrar clases del curso específico
+    const courseClasses = allData.filter(item => item.curso === courseName);
+    
+    if (courseClasses.length === 0) {
+        return;
+    }
+    
+    // Ordenar por número de clase
+    courseClasses.sort((a, b) => a.numeroClase - b.numeroClase);
+    
+    // Abrir modal con la primera clase
+    currentCourseClasses = courseClasses;
+    currentClassData = courseClasses[0];
+    
+    // Abrir modal
+    openClassModal(currentClassData);
 }
 
 // Función para crear preview de texto sin Markdown
@@ -451,7 +502,9 @@ function createClassCard(classItem) {
 // Función para alternar visibilidad de materias
 function toggleSubject(subject) {
     const subjectGroup = document.querySelector(`[data-subject="${subject}"]`);
-    subjectGroup.classList.toggle('collapsed');
+    if (subjectGroup) {
+        subjectGroup.classList.toggle('collapsed');
+    }
 }
 
 // Función para abrir modal de clase
