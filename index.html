@@ -38,7 +38,7 @@
             <!-- Sección de filtros -->
             <section class="filters-section">
                 <div class="search-container">
-                    <input type="text" id="searchInput" placeholder="Buscar por curso, materia o profesor..." class="search-input">
+                    <input type="text" id="searchInput" placeholder="Buscar por curso, materia, profesor, alumnos o contenido..." class="search-input">
                     <i class="fas fa-search search-icon"></i>
                 </div>
                 <div class="filter-buttons" id="filterButtons">
@@ -93,6 +93,12 @@
                         <div class="class-number">
                             <i class="fas fa-hashtag"></i>
                             <span>Clase <span id="modalClassNumber"></span></span>
+                        </div>
+                        
+                        <!-- Nueva sección para alumnos encargados -->
+                        <div class="students-info" id="studentsSection" style="display: none;">
+                            <i class="fas fa-users"></i>
+                            <span>Alumnos encargados: <span id="modalStudents"></span></span>
                         </div>
                         
                         <div class="content-section">

@@ -187,54 +187,124 @@ async function fetchGoogleSheetsData() {
 
 // Función para parsear CSV
 function parseCSV(csvText) {
-    const lines = csvText.split('\n');
+    // Dividir por líneas pero mantener los saltos de línea dentro de campos entrecomillados
     const result = [];
+    let currentRow = '';
+    let inQuotes = false;
+    let lines = csvText.split('\n');
     
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line) {
-            // Parsear CSV simple (maneja comillas básicas)
-            const row = parseCSVLine(line);
-            result.push(row);
+        const line = lines[i];
+        
+        // Contar comillas en la línea para determinar si estamos dentro de un campo entrecomillado
+        const quoteCount = (line.match(/"/g) || []).length;
+        
+        if (currentRow) {
+            // Estamos construyendo una fila multilínea
+            currentRow += '\n' + line;
+        } else {
+            currentRow = line;
+        }
+        
+        // Determinar si estamos dentro de comillas
+        const totalQuotes = (currentRow.match(/"/g) || []).length;
+        inQuotes = (totalQuotes % 2) !== 0;
+        
+        // Si no estamos dentro de comillas y tenemos contenido, procesar la fila
+        if (!inQuotes && currentRow.trim()) {
+            const parsedRow = parseCSVLine(currentRow);
+            if (parsedRow.length > 0) {
+                result.push(parsedRow);
+            }
+            currentRow = '';
+        }
+    }
+    
+    // Procesar la última fila si quedó pendiente
+    if (currentRow.trim()) {
+        const parsedRow = parseCSVLine(currentRow);
+        if (parsedRow.length > 0) {
+            result.push(parsedRow);
         }
     }
     
     return result;
 }
 
-// Función para parsear una línea de CSV
+// Función para parsear una línea de CSV mejorada
+// Maneja comillas dobles escapadas, comas dentro de campos y contenido multilínea
 function parseCSVLine(line) {
     const result = [];
     let current = '';
     let inQuotes = false;
+    let i = 0;
     
-    for (let i = 0; i < line.length; i++) {
+    while (i < line.length) {
         const char = line[i];
         
         if (char === '"') {
-            inQuotes = !inQuotes;
+            // Manejar comillas dobles escapadas
+            if (inQuotes && line[i + 1] === '"') {
+                current += '"';
+                i += 2; // Saltar ambas comillas
+                continue;
+            } else {
+                inQuotes = !inQuotes;
+            }
         } else if (char === ',' && !inQuotes) {
-            result.push(current.trim());
+            // Procesar el campo actual
+            let cleanValue = current.trim();
+            
+            // Limpiar comillas del inicio y final si las hay
+            if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
+                cleanValue = cleanValue.slice(1, -1);
+                // Reemplazar comillas dobles escapadas por comillas simples
+                cleanValue = cleanValue.replace(/""/g, '"');
+            }
+            
+            // Manejar campos marcados como "vacio"
+            if (cleanValue.toLowerCase() === 'vacio') {
+                cleanValue = '';
+            }
+            
+            result.push(cleanValue);
             current = '';
         } else {
             current += char;
         }
+        i++;
     }
     
-    result.push(current.trim());
+    // Procesar el último campo
+    let cleanValue = current.trim();
+    if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
+        cleanValue = cleanValue.slice(1, -1);
+        // Reemplazar comillas dobles escapadas por comillas simples
+        cleanValue = cleanValue.replace(/""/g, '"');
+    }
+    
+    // Manejar campos marcados como "vacio"
+    if (cleanValue.toLowerCase() === 'vacio') {
+        cleanValue = '';
+    }
+    
+    result.push(cleanValue);
+    
     return result;
 }
 
 // Función para procesar los datos del sheet
 function processSheetData(rawData) {
     if (rawData.length === 0) return [];
-    
+
     // Asumir que la primera fila son los encabezados
     const headers = rawData[0];
     const processedData = [];
-    
-    // Mapear encabezados a índices
+
+    // Mapear encabezados a índices con mayor flexibilidad
     const headerMap = {
+        marcaTemporal: headers.findIndex(h => h.toLowerCase().includes('marca') && h.toLowerCase().includes('temporal')),
+        email: headers.findIndex(h => h.toLowerCase().includes('correo') || h.toLowerCase().includes('email')),
         materia: headers.findIndex(h => h.toLowerCase().includes('materia')),
         profesor: headers.findIndex(h => h.toLowerCase().includes('profesor')),
         curso: headers.findIndex(h => h.toLowerCase().includes('curso')),
@@ -244,17 +314,20 @@ function processSheetData(rawData) {
         contenidoTeorico: headers.findIndex(h => h.toLowerCase().includes('contenido') && h.toLowerCase().includes('teorico')),
         contenidoPractico: headers.findIndex(h => h.toLowerCase().includes('contenido') && h.toLowerCase().includes('practico')),
         recursos: headers.findIndex(h => h.toLowerCase().includes('recursos')),
-        extra: headers.findIndex(h => h.toLowerCase().includes('extra'))
+        extra: headers.findIndex(h => h.toLowerCase().includes('extra')),
+        alumnosEncargados: headers.findIndex(h => h.toLowerCase().includes('alumnos') && h.toLowerCase().includes('encargados'))
     };
-    
+
     // Procesar cada fila (saltando la primera que son los encabezados)
     for (let i = 1; i < rawData.length; i++) {
         const row = rawData[i];
         
-        // Saltar filas vacías
-        if (!row || row.length === 0 || !row[headerMap.materia]) continue;
-        
+        // Saltar filas vacías o que no tengan materia
+        if (!row || row.length === 0 || !row[headerMap.materia] || row[headerMap.materia].trim() === '') continue;
+
         const classData = {
+            marcaTemporal: row[headerMap.marcaTemporal] || '',
+            email: row[headerMap.email] || '',
             materia: row[headerMap.materia] || '',
             profesor: row[headerMap.profesor] || '',
             curso: row[headerMap.curso] || '',
@@ -264,12 +337,13 @@ function processSheetData(rawData) {
             contenidoTeorico: row[headerMap.contenidoTeorico] || '',
             contenidoPractico: row[headerMap.contenidoPractico] || '',
             recursos: row[headerMap.recursos] || '',
-            extra: row[headerMap.extra] || ''
+            extra: row[headerMap.extra] || '',
+            alumnosEncargados: row[headerMap.alumnosEncargados] || ''
         };
-        
+
         processedData.push(classData);
     }
-    
+
     return processedData;
 }
 
@@ -338,7 +412,10 @@ function renderSubjects() {
     let filteredData = allData.filter(item => {
         const matchesSearch = item.materia.toLowerCase().includes(searchTerm) ||
                             item.profesor.toLowerCase().includes(searchTerm) ||
-                            item.curso.toLowerCase().includes(searchTerm);
+                            item.curso.toLowerCase().includes(searchTerm) ||
+                            (item.alumnosEncargados && item.alumnosEncargados.toLowerCase().includes(searchTerm)) ||
+                            (item.contenidoTeorico && item.contenidoTeorico.toLowerCase().includes(searchTerm)) ||
+                            (item.contenidoPractico && item.contenidoPractico.toLowerCase().includes(searchTerm));
         
         const matchesSubject = currentSubject === 'all' || item.materia === currentSubject;
         
@@ -476,6 +553,17 @@ function createTextPreview(text, maxLength = 100) {
 function createClassCard(classItem) {
     const preview = createTextPreview(classItem.contenidoTeorico, 100);
     
+    // Preparar información adicional si está disponible
+    let additionalInfo = '';
+    if (classItem.alumnosEncargados && classItem.alumnosEncargados.trim()) {
+        additionalInfo = `
+            <div class="class-students">
+                <i class="fas fa-users"></i>
+                ${classItem.alumnosEncargados}
+            </div>
+        `;
+    }
+    
     return `
         <div class="class-card" onclick="openClassModal(${JSON.stringify(classItem).replace(/"/g, '&quot;')})">
             <div class="class-header">
@@ -489,6 +577,7 @@ function createClassCard(classItem) {
                         <i class="fas fa-user-tie"></i>
                         ${classItem.profesor}
                     </div>
+                    ${additionalInfo}
                 </div>
                 <div class="class-number">
                     Clase ${classItem.numeroClase}
@@ -533,6 +622,16 @@ function displayClassData(classData) {
     document.getElementById('modalQuarter').textContent = `${classData.cuatrimestre}° Cuatrimestre`;
     document.getElementById('modalProfessor').textContent = classData.profesor;
     document.getElementById('modalClassNumber').textContent = classData.numeroClase;
+    
+    // Mostrar alumnos encargados si existe
+    const studentsSection = document.getElementById('studentsSection');
+    const modalStudents = document.getElementById('modalStudents');
+    if (classData.alumnosEncargados && classData.alumnosEncargados.trim()) {
+        modalStudents.textContent = classData.alumnosEncargados;
+        studentsSection.style.display = 'block';
+    } else {
+        studentsSection.style.display = 'none';
+    }
     
     // Renderizar contenido con soporte para Markdown
     document.getElementById('modalTheoreticalContent').innerHTML = renderMarkdown(classData.contenidoTeorico);

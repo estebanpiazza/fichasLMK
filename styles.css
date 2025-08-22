@@ -599,13 +599,20 @@ body {
     border: 1px solid var(--gray-medium);
 }
 
-.class-professor {
+.class-professor,
+.class-students {
     color: var(--gray-dark);
     font-size: 0.9rem;
     font-weight: 600;
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+.class-students {
+    margin-top: 5px;
+    color: var(--accent-red);
+    font-size: 0.85rem;
 }
 
 .class-preview {
@@ -794,7 +801,8 @@ body {
 }
 
 .professor-info,
-.class-number {
+.class-number,
+.students-info {
     display: flex;
     align-items: center;
     gap: 15px;
@@ -1022,81 +1030,270 @@ body {
 .resource-link {
     color: var(--primary-green);
     text-decoration: none;
-    padding: 16px 24px;
-    background: var(--light-green);
-    border-radius: var(--border-radius);
+    padding: 20px 28px;
+    background: linear-gradient(135deg, var(--light-green) 0%, rgba(248, 253, 248, 0.8) 100%);
+    border-radius: 16px;
     transition: var(--transition);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     font-size: 1.1rem;
     font-weight: 600;
-    border: 2px solid transparent;
-    box-shadow: 0 2px 8px var(--shadow);
+    border: 2px solid rgba(26, 58, 26, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.resource-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(26, 58, 26, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.resource-link:hover::before {
+    left: 100%;
 }
 
 .resource-link:hover {
     background: var(--gradient-primary);
     color: var(--white);
     border-color: var(--primary-green);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(26, 58, 26, 0.3);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(26, 58, 26, 0.25);
 }
 
-/* Estilos para enlaces automáticos detectados en el contenido */
+.resource-link i {
+    font-size: 1.2em;
+    opacity: 0.8;
+    transition: var(--transition);
+}
+
+.resource-link:hover i {
+    opacity: 1;
+    transform: scale(1.1) rotate(5deg);
+}
+
+/* Estilos especiales para enlaces de YouTube en recursos */
+.resource-link[href*="youtube.com"],
+.resource-link[href*="youtu.be"] {
+    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+    color: var(--white);
+    border-color: #ff0000;
+    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.2);
+}
+
+.resource-link[href*="youtube.com"]:hover,
+.resource-link[href*="youtu.be"]:hover {
+    background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(255, 0, 0, 0.35);
+}
+
+.resource-link[href*="youtube.com"] i,
+.resource-link[href*="youtu.be"] i {
+    color: var(--white);
+}
+
+/* Estilos especiales para enlaces de Google Drive en recursos */
+.resource-link[href*="drive.google.com"] {
+    background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+    color: var(--white);
+    border-color: #4285f4;
+    box-shadow: 0 4px 15px rgba(66, 133, 244, 0.2);
+}
+
+.resource-link[href*="drive.google.com"]:hover {
+    background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(66, 133, 244, 0.35);
+}
+
+/* Estilos mejorados para enlaces automáticos detectados en el contenido */
 .auto-link {
     color: var(--primary-green);
     text-decoration: none;
-    padding: 4px 8px;
-    background: rgba(26, 58, 26, 0.1);
-    border-radius: var(--border-radius-sm);
+    padding: 8px 16px;
+    background: linear-gradient(135deg, rgba(26, 58, 26, 0.08) 0%, rgba(26, 58, 26, 0.12) 100%);
+    border-radius: 25px;
     transition: var(--transition);
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     font-weight: 500;
-    border: 1px solid transparent;
+    border: 2px solid rgba(26, 58, 26, 0.15);
     word-break: break-all;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.auto-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.auto-link:hover::before {
+    left: 100%;
 }
 
 .auto-link:hover {
-    background: var(--primary-green);
+    background: var(--gradient-primary);
     color: var(--white);
     border-color: var(--primary-green);
     text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(26, 58, 26, 0.25);
 }
 
 .auto-link i {
-    font-size: 0.8em;
-    opacity: 0.8;
+    font-size: 0.9em;
+    opacity: 0.9;
+    transition: var(--transition);
 }
 
-/* Estilos para elementos de recursos que no son enlaces */
+.auto-link:hover i {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Estilos especiales para enlaces de YouTube */
+.auto-link[href*="youtube.com"],
+.auto-link[href*="youtu.be"] {
+    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+    color: var(--white);
+    border-color: #ff0000;
+    font-weight: 600;
+    box-shadow: 0 3px 10px rgba(255, 0, 0, 0.2);
+}
+
+.auto-link[href*="youtube.com"]:hover,
+.auto-link[href*="youtu.be"]:hover {
+    background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 0, 0, 0.3);
+}
+
+.auto-link[href*="youtube.com"]::before,
+.auto-link[href*="youtu.be"]::before {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+/* Estilos especiales para enlaces de Google Drive */
+.auto-link[href*="drive.google.com"] {
+    background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
+    color: var(--white);
+    border-color: #4285f4;
+    font-weight: 600;
+    box-shadow: 0 3px 10px rgba(66, 133, 244, 0.2);
+}
+
+.auto-link[href*="drive.google.com"]:hover {
+    background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(66, 133, 244, 0.3);
+}
+
+/* Estilos mejorados para elementos de recursos que no son enlaces */
 .resource-item {
     color: var(--text-dark);
-    padding: 12px 18px;
-    background: var(--light-green);
-    border-radius: var(--border-radius-sm);
+    padding: 16px 22px;
+    background: linear-gradient(135deg, var(--light-green) 0%, rgba(248, 253, 248, 0.7) 100%);
+    border-radius: 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
     font-size: 1rem;
-    border: 1px solid var(--gray-medium);
-    margin-bottom: 8px;
+    border: 2px solid rgba(26, 58, 26, 0.08);
+    margin-bottom: 10px;
+    transition: var(--transition);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.resource-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: rgba(26, 58, 26, 0.15);
 }
 
 .resource-item i {
     color: var(--primary-green);
-    opacity: 0.7;
+    opacity: 0.8;
+    font-size: 1.1em;
+    transition: var(--transition);
+}
+
+.resource-item:hover i {
+    opacity: 1;
+    transform: scale(1.05);
 }
 
 /* Mejorar espaciado en contenido con enlaces automáticos */
 .markdown-content .auto-link {
-    margin: 0 2px;
+    margin: 2px 4px;
 }
 
 .modal-body p .auto-link {
-    margin: 0 1px;
+    margin: 1px 2px;
+}
+
+/* Estilos especiales para la sección Extra */
+#extraSection {
+    border-left: 4px solid var(--accent-red);
+    background: linear-gradient(135deg, #fff8f8 0%, #ffffff 100%);
+    position: relative;
+}
+
+#extraSection::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-red), transparent);
+    border-radius: 2px 2px 0 0;
+}
+
+#extraSection h4 {
+    color: var(--accent-red);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 1.3rem;
+}
+
+#extraSection h4 i {
+    color: var(--accent-red);
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+/* Animación sutil para la sección Extra */
+#extraSection {
+    animation: fadeInExtra 0.6s ease-out;
+}
+
+@keyframes fadeInExtra {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Footer */

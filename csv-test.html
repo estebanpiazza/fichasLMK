@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Parser CSV</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-case { margin: 20px 0; padding: 15px; border: 1px solid #ccc; background: #f9f9f9; }
+        .result { margin-top: 10px; padding: 10px; background: #e8f4f8; }
+        pre { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Prueba del Parser CSV Mejorado</h1>
+    
+    <div class="test-case">
+        <h3>Caso 1: Datos sin comillas</h3>
+        <pre id="test1-input">Materia,Profesor,Contenido
+Matemática,Juan Pérez,Álgebra básica</pre>
+        <div class="result" id="test1-result"></div>
+    </div>
+    
+    <div class="test-case">
+        <h3>Caso 2: Datos con comas dentro de comillas</h3>
+        <pre id="test2-input">Materia,Profesor,Contenido
+"Literatura Española","María García, PhD","Análisis de textos clásicos, modernos y contemporáneos"</pre>
+        <div class="result" id="test2-result"></div>
+    </div>
+    
+    <div class="test-case">
+        <h3>Caso 3: Datos con comillas dobles escapadas</h3>
+        <pre id="test3-input">Materia,Profesor,Contenido
+Historia,"Carlos López","El concepto de ""Revolución"" en el siglo XX"</pre>
+        <div class="result" id="test3-result"></div>
+    </div>
+    
+    <div class="test-case">
+        <h3>Caso 4: Datos mezclados (como en Google Forms)</h3>
+        <pre id="test4-input">Marca temporal,Email,Materia,Profesor,Curso,Año,Cuatrimestre,Numero de Clase,Contenido teorico,Contenido practico,Recursos,Extra,Alumnos encargados
+"2025-01-15 10:30:00","estudiante@ejemplo.com","Matemática Aplicada","Dr. Rodriguez, PhD","1er Año","2025","1","1","Introducción a funciones, límites y derivadas","Ejercicios prácticos con calculadora, gráficos en papel milimetrado","https://ejemplo.com/recursos, libro capítulo 1-3","Material extra disponible en biblioteca","Juan Pérez, María González"</pre>
+        <div class="result" id="test4-result"></div>
+    </div>
+
+    <div class="test-case">
+        <h3>Caso 5: Datos reales de Google Forms (como tu ejemplo)</h3>
+        <pre id="test5-input">Marca temporal,Dirección de correo electrónico,Materia,Profesor,Curso,Año,Cuatrimestre,Numero de Clase,Contenido teorico,Contenido practico,Recursos,Extra,Alumnos encargados
+22/08/2025 14:30:27,alumno.lfullin@colegiolimerick.edu.ar,Tecnologia,Esteban Piazza,Informática General,1er año,1er cuatrimestre,1,"📖 Clase 1: Introducción a la informática
+
+Teoría
+
+1. ¿Qué es la informática?
+
+La informática es la ciencia que se encarga de estudiar y diseñar sistemas.","1. Mapa conceptual en grupo:
+Dibujen un esquema con la palabra informática en el centro.
+
+2. Ejercicio de reflexión individual:
+Escribí un breve párrafo respondiendo.",vacio,https://youtu.be/acNAWxLXhk8,"CULVER, Vladimir Wallace, FULLIN, Lucio Virgilio"</pre>
+        <div class="result" id="test5-result"></div>
+    </div>
+
+    <script>
+        // Función para parsear CSV mejorada
+        function parseCSV(csvText) {
+            const result = [];
+            let currentRow = '';
+            let inQuotes = false;
+            let lines = csvText.split('\n');
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                if (currentRow) {
+                    currentRow += '\n' + line;
+                } else {
+                    currentRow = line;
+                }
+                
+                // Determinar si estamos dentro de comillas
+                const totalQuotes = (currentRow.match(/"/g) || []).length;
+                inQuotes = (totalQuotes % 2) !== 0;
+                
+                // Si no estamos dentro de comillas y tenemos contenido, procesar la fila
+                if (!inQuotes && currentRow.trim()) {
+                    const parsedRow = parseCSVLine(currentRow);
+                    if (parsedRow.length > 0) {
+                        result.push(parsedRow);
+                    }
+                    currentRow = '';
+                }
+            }
+            
+            // Procesar la última fila si quedó pendiente
+            if (currentRow.trim()) {
+                const parsedRow = parseCSVLine(currentRow);
+                if (parsedRow.length > 0) {
+                    result.push(parsedRow);
+                }
+            }
+            
+            return result;
+        }
+
+        // Función para parsear una línea de CSV mejorada
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            let i = 0;
+            
+            while (i < line.length) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i += 2;
+                        continue;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    let cleanValue = current.trim();
+                    
+                    if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
+                        cleanValue = cleanValue.slice(1, -1);
+                        cleanValue = cleanValue.replace(/""/g, '"');
+                    }
+                    
+                    if (cleanValue.toLowerCase() === 'vacio') {
+                        cleanValue = '';
+                    }
+                    
+                    result.push(cleanValue);
+                    current = '';
+                } else {
+                    current += char;
+                }
+                i++;
+            }
+            
+            // Procesar el último campo
+            let cleanValue = current.trim();
+            if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
+                cleanValue = cleanValue.slice(1, -1);
+                cleanValue = cleanValue.replace(/""/g, '"');
+            }
+            
+            if (cleanValue.toLowerCase() === 'vacio') {
+                cleanValue = '';
+            }
+            
+            result.push(cleanValue);
+            return result;
+        }
+
+        // Función para ejecutar pruebas
+        function runTest(testNumber) {
+            const input = document.getElementById(`test${testNumber}-input`).textContent;
+            
+            if (testNumber === 5) {
+                // Para el caso 5, usar el parser completo de CSV
+                const results = parseCSV(input);
+                
+                document.getElementById(`test${testNumber}-result`).innerHTML = 
+                    '<strong>Resultado:</strong><br>' + 
+                    results.map((row, i) => 
+                        `<div style="margin-bottom: 15px; border-left: 3px solid #007acc; padding-left: 10px;">
+                            <strong>Línea ${i + 1}:</strong><br>
+                            ${row.map((cell, j) => 
+                                `<div style="margin: 5px 0; padding: 5px; background: ${j % 2 === 0 ? '#f0f0f0' : '#ffffff'};">
+                                    <strong>Campo ${j + 1}:</strong> "${cell.length > 100 ? cell.substring(0, 100) + '...' : cell}"
+                                </div>`
+                            ).join('')}
+                        </div>`
+                    ).join('');
+            } else {
+                // Para otros casos, usar el parser de línea única
+                const lines = input.split('\n').filter(line => line.trim());
+                const results = lines.map(line => parseCSVLine(line));
+                
+                document.getElementById(`test${testNumber}-result`).innerHTML = 
+                    '<strong>Resultado:</strong><br>' + 
+                    results.map((row, i) => 
+                        `Línea ${i + 1}: [${row.map(cell => `"${cell}"`).join(', ')}]`
+                    ).join('<br>');
+            }
+        }
+
+        // Ejecutar todas las pruebas al cargar la página
+        window.onload = function() {
+            for (let i = 1; i <= 5; i++) {
+                runTest(i);
+            }
+        };
+    </script>
+</body>
+</html>
